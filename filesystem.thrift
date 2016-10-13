@@ -1,10 +1,15 @@
-namespace if4031 filesystem
-typedef i32 int
+struct FileStruct {
+	1: required string name;
+	2: optional binary content;
+	3: optional i64 size;
+	4: optional i64 modDate;
+	5: optional i64 createdDate;
+}
 service FilesystemService
 {
-	list<string> getDir(1:string path),
+	list<FileStruct> getDir(1:string path),
 	string createDir(1:string path, 2:string name),
 	string getFile(1:string path, 2:string filename),
-	binary getBinary(1:string path, 2:string filename),
-	string putFile(1:string path, 2:string filename, 3:binary file)
+	FileStruct getBinary(1:string path, 2:string filename),
+	string putFile(1:string path, 2:string filename, 3:FileStruct file)
 }

@@ -3,11 +3,14 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
+import java.text.SimpleDateFormat;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.FileOutputStream;
 import java.io.FileInputStream;
 import java.io.File;
+import java.nio.file.*;
+import java.nio.file.attribute.*;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.ArrayList;
@@ -15,6 +18,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.thrift.TException;
@@ -31,6 +35,7 @@ public class FilesystemClient {
         Scanner in = new Scanner(System.in);
         String input;
         boolean exit = false;
+        System.out.println("Client Running...");
         while (true) {
             if (exit) {
                 break;        
@@ -55,10 +60,18 @@ public class FilesystemClient {
                         break;
                     }
 
-                    List<String> result = client.getDir(arrInput.get(1));
-                    Iterator iterator = result.iterator();
-                    while(iterator.hasNext()) {
-                        System.out.println(iterator.next());
+                    System.out.println("Name" + "\t" + "Size" + "\t" + "Last Modified" + "\t" + "Creation Date");
+                    SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+                    List<FileStruct> result = client.getDir(arrInput.get(1));
+                    for (int i=0; i<result.size(); i++) {
+                        if (result.get(i).isSetModDate()) {
+                            Date modDate = new Date(result.get(i).getModDate());
+                            Date createdDate = new Date(result.get(i).getCreatedDate());
+                            System.out.println(result.get(i).getName() + "\t" + result.get(i).getSize() + "byte" + "\t" + format.format(modDate) + "\t" + format.format(createdDate));
+                        }
+                        else {
+                            System.out.println(result.get(i).getName());
+                        }
                     }
                     break;
                 case "GETFILE":
@@ -69,13 +82,14 @@ public class FilesystemClient {
 
                     String fileResult = client.getFile(arrInput.get(1), arrInput.get(2));
                     if (fileResult.equals("Found")) {
-                        ByteBuffer buff = client.getBinary(arrInput.get(1), arrInput.get(2));
+                        FileStruct resultFile = client.getBinary(arrInput.get(1), arrInput.get(2));
                         String dirPath = System.getProperty("user.dir") + "\\" + arrInput.get(3);
                         File storeTarget = new File(dirPath + "\\" + arrInput.get(2));
                         FileOutputStream store = new FileOutputStream(storeTarget);
                         FileChannel channel = store.getChannel();
-                        channel.write(buff);
+                        channel.write(resultFile.content);
                         channel.close();
+                        storeTarget.setLastModified(resultFile.getModDate());
                         System.out.println("File Processed");
                     }
                     else {
@@ -90,13 +104,21 @@ public class FilesystemClient {
 
                     String dirPath = System.getProperty("user.dir") + "\\" + arrInput.get(3);
                     try {
+                        FileStruct payloadFile = new FileStruct();
                         File targetFile = new File(dirPath + "\\" + arrInput.get(2));
                         FileInputStream payload = new FileInputStream(targetFile);
                         FileChannel channel = payload.getChannel();
-                        ByteBuffer writeBuff = ByteBuffer.allocate((int) channel.size());
-                        channel.read(writeBuff);
-                        writeBuff.rewind();
-                        System.out.println(client.putFile(arrInput.get(1), arrInput.get(2), writeBuff));
+                        payloadFile.content = ByteBuffer.allocate((int) channel.size());
+                        channel.read(payloadFile.content);
+                        payloadFile.content.rewind();
+                        payloadFile.setName(targetFile.getName());
+                        payloadFile.setModDate(targetFile.lastModified());
+                        payloadFile.setSize(targetFile.length());
+                        Path filePath = Paths.get(targetFile.getAbsolutePath());
+                        BasicFileAttributes attr = Files.readAttributes(filePath, BasicFileAttributes.class);
+                        payloadFile.setCreatedDate(attr.creationTime().toMillis());
+
+                        System.out.println(client.putFile(arrInput.get(1), arrInput.get(2), payloadFile));
                         channel.close();
                     } catch (FileNotFoundException ex) {
                         ex.printStackTrace();
