@@ -29,7 +29,7 @@ import java.util.logging.Logger;
 public class FilesystemHandler implements FilesystemService.Iface {
     @Override
     public List<FileStruct> getDir(String path) {
-        String dirPath = System.getProperty("user.dir") + "\\" + path;
+        String dirPath = System.getProperty("user.dir") + File.separator + path;
         File dir = new File(dirPath);
         ArrayList<File> files = new ArrayList<File>(Arrays.asList(dir.listFiles()));
         
@@ -62,8 +62,8 @@ public class FilesystemHandler implements FilesystemService.Iface {
     
     @Override
     public String createDir(String path, String name) {
-        String dirPath = System.getProperty("user.dir") + "\\" + path;
-        File newDir = new File(dirPath + "\\" + name);
+        String dirPath = System.getProperty("user.dir") + File.separator + path;
+        File newDir = new File(dirPath + File.separator + name);
         boolean success = newDir.mkdir();
         if(success) {
             return "Directory was successfully created";
@@ -75,7 +75,7 @@ public class FilesystemHandler implements FilesystemService.Iface {
 
     @Override
     public String getFile(String path, String filename) {
-        String dirPath = System.getProperty("user.dir") + "\\" + path;
+        String dirPath = System.getProperty("user.dir") + File.separator + path;
         String result = "No such file";
         File dir = new File(dirPath);
         ArrayList<String> names = new ArrayList<String>(Arrays.asList(dir.list()));
@@ -87,11 +87,11 @@ public class FilesystemHandler implements FilesystemService.Iface {
 
     @Override
     public FileStruct getBinary(String path, String filename) throws TException {
-        String dirPath = System.getProperty("user.dir") + "\\" + path;
+        String dirPath = System.getProperty("user.dir") + File.separator + path;
         ByteBuffer buff = null;
         FileStruct fileStruct = new FileStruct();
         try {
-            File targetFile = new File(dirPath + "\\" + filename);
+            File targetFile = new File(dirPath + File.separator + filename);
             FileInputStream payload = new FileInputStream(targetFile);
             FileChannel channel = payload.getChannel();
             fileStruct.content = ByteBuffer.allocate((int) channel.size());
@@ -116,9 +116,9 @@ public class FilesystemHandler implements FilesystemService.Iface {
 
     @Override
     public String putFile(String path, String filename, FileStruct file) throws TException {
-        String dirPath = System.getProperty("user.dir") + "\\" + path;
+        String dirPath = System.getProperty("user.dir") + File.separator + path;
         try {
-            File targetStore = new File(dirPath + "\\" + filename);
+            File targetStore = new File(dirPath + File.separator + filename);
             FileOutputStream store = new FileOutputStream(targetStore);
             FileChannel channel = store.getChannel();
             channel.write(file.content);

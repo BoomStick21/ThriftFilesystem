@@ -39,7 +39,8 @@ public class FilesystemClient {
         while (true) {
             if (exit) {
                 break;        
-            }    
+            }
+            System.out.println();    
             input = in.nextLine();
             List<String> arrInput = Arrays.asList(input.split(" "));
             switch (arrInput.get(0)) {
@@ -83,8 +84,8 @@ public class FilesystemClient {
                     String fileResult = client.getFile(arrInput.get(1), arrInput.get(2));
                     if (fileResult.equals("Found")) {
                         FileStruct resultFile = client.getBinary(arrInput.get(1), arrInput.get(2));
-                        String dirPath = System.getProperty("user.dir") + "\\" + arrInput.get(3);
-                        File storeTarget = new File(dirPath + "\\" + arrInput.get(2));
+                        String dirPath = System.getProperty("user.dir") + File.separator + arrInput.get(3);
+                        File storeTarget = new File(dirPath + File.separator + arrInput.get(2));
                         FileOutputStream store = new FileOutputStream(storeTarget);
                         FileChannel channel = store.getChannel();
                         channel.write(resultFile.content);
@@ -102,10 +103,10 @@ public class FilesystemClient {
                         break;
                     }
 
-                    String dirPath = System.getProperty("user.dir") + "\\" + arrInput.get(3);
+                    String dirPath = System.getProperty("user.dir") + File.separator + arrInput.get(3);
                     try {
                         FileStruct payloadFile = new FileStruct();
-                        File targetFile = new File(dirPath + "\\" + arrInput.get(2));
+                        File targetFile = new File(dirPath + File.separator + arrInput.get(2));
                         FileInputStream payload = new FileInputStream(targetFile);
                         FileChannel channel = payload.getChannel();
                         payloadFile.content = ByteBuffer.allocate((int) channel.size());
